@@ -83,15 +83,7 @@ button:focus-visible,.tab:focus-visible,select:focus-visible,input:focus-visible
 @media (prefers-reduced-motion: reduce){
   .banner{transition:none}
 }
-.lock-overlay{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
-.lock-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px 28px;max-width:340px;width:100%;text-align:center}
-.lock-icon{font-size:36px;margin-bottom:8px}
-.lock-card h2{margin:0 0 6px;font-size:20px}
-.lock-card .note{margin:0 0 20px}
-.lock-input{text-align:left;font-size:24px;letter-spacing:.2em;padding:14px 16px}
-.lock-error{color:var(--danger);font-size:13px;min-height:1.2em;margin:8px 0}
-.lock-submit{width:100%;margin-top:6px}
-.lock-forgot{border:0;background:none;color:var(--muted);font-size:13px;margin-top:14px;text-decoration:underline;font-family:inherit;padding:4px}
+
 @media (min-width:760px){
   .templategrid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .setupgrid{grid-template-columns:1fr 1fr}
@@ -110,17 +102,7 @@ button:focus-visible,.tab:focus-visible,select:focus-visible,input:focus-visible
 <body>
 <div class="app">
 <div id="banner" class="banner" role="status" aria-live="polite"></div>
-<div id="lockScreen" class="lock-overlay" hidden>
-  <div class="lock-card">
-    <div class="lock-icon">🔒</div>
-    <h2 id="lockTitle">Code eingeben</h2>
-    <p class="note" id="lockSubtitle">Gib deinen Code ein, um fortzufahren.</p>
-    <input id="lockInput" class="lock-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="8" placeholder="••••">
-    <div class="lock-error" id="lockError"></div>
-    <button type="button" class="btn primary lock-submit" id="lockSubmit">Entsperren</button>
-    <button type="button" class="lock-forgot" id="lockForgot" hidden>Code vergessen?</button>
-  </div>
-</div>
+
 <header>
   <div class="head">
     <div class="brand">📅 Ivan · Wochenplan</div>
@@ -210,7 +192,6 @@ button:focus-visible,.tab:focus-visible,select:focus-visible,input:focus-visible
       <div id="dataStats"></div>
       <div class="toolbar">
         <button class="btn" type="button" onclick="repairData()">🛠️ Daten prüfen &amp; reparieren</button>
-        <button class="btn" type="button" onclick="changePinFlow()">🔑 Code ändern</button>
         <button class="btn danger" type="button" onclick="resetAll()">⚠️ Alles zurücksetzen</button>
       </div>
       <div class="filehint" id="storageWarning"></div>
@@ -690,116 +671,6 @@ document.getElementById('importFile').addEventListener('change', function(e){
   e.target.value = '';
 });
 
-// ================= Code-Sperre =================
-const PIN_KEY = 'ivan_wochenplan_pin_hash_v1';
-let lockStage = 'unlock'; // 'unlock' | 'set1' | 'set2'
-let firstPinEntry = '';
-
-async function sha256Hex(text){
-  const data = new TextEncoder().encode(text);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(digest)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-}
-function getPinHash(){ try{ return localStorage.getItem(PIN_KEY); }catch(e){ return null; } }
-function setPinHash(hash){ try{ localStorage.setItem(PIN_KEY, hash); return true; }catch(e){ return false; } }
-function removePinHash(){ try{ localStorage.removeItem(PIN_KEY); }catch(e){} }
-
-function lockEl(id){ return document.getElementById(id); }
-
-function setLockStage(stage){
-  lockStage = stage;
-  lockEl('lockError').textContent = '';
-  lockEl('lockInput').value = '';
-  if(stage === 'set1'){
-    firstPinEntry = '';
-    lockEl('lockTitle').textContent = 'Code festlegen';
-    lockEl('lockSubtitle').textContent = 'Mindestens 4 Ziffern. Wird nur auf diesem Gerät gespeichert.';
-    lockEl('lockSubmit').textContent = 'Weiter';
-    lockEl('lockForgot').hidden = true;
-  } else if(stage === 'set2'){
-    lockEl('lockTitle').textContent = 'Code bestätigen';
-    lockEl('lockSubtitle').textContent = 'Code zur Bestätigung erneut eingeben.';
-    lockEl('lockSubmit').textContent = 'Code speichern';
-    lockEl('lockForgot').hidden = true;
-  } else {
-    lockEl('lockTitle').textContent = 'Code eingeben';
-    lockEl('lockSubtitle').textContent = 'Gib deinen Code ein, um fortzufahren.';
-    lockEl('lockSubmit').textContent = 'Entsperren';
-    lockEl('lockForgot').hidden = false;
-  }
-  lockEl('lockInput').focus();
-}
-
-function showLockOverlay(){ lockEl('lockScreen').hidden = false; }
-function hideLockOverlay(){ lockEl('lockScreen').hidden = true; }
-
-async function handleLockSubmit(){
-  const val = lockEl('lockInput').value.trim();
-  if(!/^[0-9]{4,8}$/.test(val)){
-    lockEl('lockError').textContent = 'Bitte 4 bis 8 Ziffern eingeben.';
-    return;
-  }
-  if(lockStage === 'set1'){
-    firstPinEntry = val;
-    setLockStage('set2');
-    return;
-  }
-  if(lockStage === 'set2'){
-    if(val !== firstPinEntry){
-      lockEl('lockError').textContent = 'Stimmt nicht überein. Nochmal von vorne.';
-      setLockStage('set1');
-      return;
-    }
-    const hash = await sha256Hex(val);
-    setPinHash(hash);
-    hideLockOverlay();
-    startApp();
-    return;
-  }
-  // unlock
-  const hash = await sha256Hex(val);
-  if(hash === getPinHash()){
-    hideLockOverlay();
-    startApp();
-  } else {
-    lockEl('lockError').textContent = 'Falscher Code.';
-    lockEl('lockInput').value = '';
-    lockEl('lockInput').focus();
-  }
-}
-
-function changePinFlow(){
-  if(!STORAGE_OK){
-    showBanner('Lokale Speicherung nicht verfügbar – Code kann nicht gespeichert werden.', 'error');
-    return;
-  }
-  removePinHash();
-  showLockOverlay();
-  setLockStage('set1');
-}
-
-lockEl('lockSubmit').addEventListener('click', handleLockSubmit);
-lockEl('lockInput').addEventListener('keydown', function(e){ if(e.key === 'Enter') handleLockSubmit(); });
-lockEl('lockInput').addEventListener('input', function(e){
-  const cleaned = e.target.value.replace(/[^0-9]/g,'');
-  if(cleaned !== e.target.value){ e.target.value = cleaned; }
-});
-lockEl('lockForgot').addEventListener('click', function(){
-  if(confirm('Code zurücksetzen? Deine gespeicherten Aufgaben bleiben erhalten, nur die Sperre wird entfernt. Danach kannst du einen neuen Code festlegen.')){
-    removePinHash();
-    setLockStage('set1');
-  }
-});
-
-function initLock(){
-  if(!STORAGE_OK){
-    startApp(); // ohne Speicherung könnte ein Code nie gespeichert/erkannt werden
-    return;
-  }
-  showLockOverlay();
-  setLockStage(getPinHash() ? 'unlock' : 'set1');
-}
-
 // ================= Start =================
 function startApp(){
   const loaded = loadState();
@@ -810,7 +681,8 @@ function startApp(){
     showBanner('Einige gespeicherte Daten waren beschädigt und wurden automatisch bereinigt.', 'info');
   }
 }
-initLock();
+try{ localStorage.removeItem('ivan_wochenplan_pin_hash_v1'); }catch(e){} // Rest einer evtl. zuvor gesetzten Code-Sperre aufräumen
+startApp();
 
 // ================= Web App / Offline =================
 // Registrierung schlägt bewusst geräuschlos fehl (z.B. beim lokalen Öffnen per Datei
