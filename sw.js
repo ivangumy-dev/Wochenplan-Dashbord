@@ -1,7 +1,7 @@
 // Service Worker für Ivan · Wochenplan
 // Cache-Version bei jeder inhaltlichen Änderung der App-Dateien erhöhen (z.B. v2, v3 …),
 // damit Geräte die neue Version laden statt eine alte im Cache zu behalten.
-const CACHE_NAME = 'ivan-wochenplan-v1';
+const CACHE_NAME = 'ivan-wochenplan-v4';
 const ASSETS = [
   './',
   './index.html',
