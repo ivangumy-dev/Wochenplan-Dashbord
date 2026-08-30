@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#15355f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Wochenplan">
+<title>Ivan · Wochenplan</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="icon" href="icons/favicon.ico">
+<link rel="shortcut icon" href="icons/favicon.ico">
+<style>
+:root {
+  --bg:#f4f6fa; --panel:#fff; --text:#172033; --muted:#667085;
+  --line:#e4e7ec; --blue:#17365d; --blue2:#274d7d; --soft:#eaf0f8;
+  --danger:#b3261e; --danger-soft:#fdeceb; --success:#1a7a4c;
+  --radius:20px; --shadow:0 8px 28px rgba(23,54,93,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--text)}
+.app{min-height:100vh}
+header{position:sticky;top:0;z-index:20;background:rgba(244,246,250,.94);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.head{max-width:920px;margin:auto;padding:14px 16px 10px}
+.brand{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.subtitle{font-size:13px;color:var(--muted);margin-top:2px}
+.tabs{display:flex;gap:8px;overflow:auto;padding:12px 0 2px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{border:0;border-radius:999px;padding:10px 14px;background:#e8edf5;color:#344054;font-weight:700;white-space:nowrap;font-size:14px;font-family:inherit}
+.tab.active{background:var(--blue);color:#fff}
+main{max-width:920px;margin:auto;padding:16px}
+.view{display:none}
+.view.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
+.cardhead{padding:16px 16px 10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cardtitle{font-size:19px;font-weight:800}
+.note{font-size:13px;color:var(--muted)}
+.day{padding:14px 16px;border-top:1px solid var(--line)}
+.day:first-of-type{border-top:0}
+.day.today{border-left:3px solid var(--blue);padding-left:13px}
+.dayname{font-weight:800;font-size:17px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.todaypill{font-size:10.5px;font-weight:800;letter-spacing:.02em;color:#fff;background:var(--blue);border-radius:999px;padding:3px 9px}
+.slot{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid #f0f2f5}
+.slot:first-of-type{border-top:0}
+.time{font-weight:700;color:#475467;font-size:14px}
+select,input,textarea{width:100%;border:1px solid #d0d5dd;border-radius:12px;background:#fff;color:var(--text);padding:11px 12px;font-size:15px;font-family:inherit}
+select:focus,input:focus,textarea:focus{outline:2px solid #bcd0ee;border-color:#8badde}
+button:focus-visible,.tab:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #8badde;outline-offset:2px}
+.done{width:32px;height:32px;border:1px solid #d0d5dd;border-radius:10px;background:#fff;font-size:18px;line-height:1}
+.done.on{background:#dff6e8;border-color:#9bd8b2}
+.done:disabled{opacity:.35;cursor:not-allowed}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid #d0d5dd;border-radius:12px;padding:10px 12px;background:#fff;font-weight:700;font-size:14px;color:var(--text);font-family:inherit}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.danger{background:#fff;color:var(--danger);border-color:#e7b3ac}
+.btn.danger:active{background:var(--danger-soft)}
+.templategrid{display:grid;grid-template-columns:1fr;gap:10px;padding:0 16px 16px}
+.template{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}
+.template strong{display:block;font-size:15px}
+.template small{color:var(--muted)}
+.setupgrid{display:grid;gap:10px;padding:0 16px 16px}
+.datagrid{display:grid;gap:14px;padding:0 16px 16px}
+.stat-row{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0f2f5;font-size:14px}
+.stat-row:first-child{border-top:0}
+.filehint{font-size:12px;color:var(--muted);min-height:1em}
+.hero{padding:18px 16px;background:linear-gradient(135deg,#17365d,#315d91);color:#fff}
+.hero h2{margin:0 0 4px;font-size:24px}
+.hero p{margin:0;opacity:.85}
+.today-list{padding:0 16px 16px}
+.today-item{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.today-item:first-child{border-top:0}
+.empty{padding:18px;color:var(--muted);text-align:center}
+.sectionlabel{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800;padding:12px 16px 4px}
+.banner{position:fixed;left:50%;top:12px;transform:translateX(-50%) translateY(-14px);z-index:60;max-width:calc(100% - 24px);width:520px;background:var(--blue);color:#fff;padding:12px 16px;border-radius:14px;font-size:14px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;text-align:center}
+.banner.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;cursor:pointer}
+.banner.success{background:var(--success)}
+.banner.error{background:var(--danger)}
+@media (prefers-reduced-motion: reduce){
+  .banner{transition:none}
+}
+@media (min-width:760px){
+  .templategrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .setupgrid{grid-template-columns:1fr 1fr}
+  .brand{font-size:28px}
+}
+@media (max-width:520px){
+  .head{padding-left:12px;padding-right:12px}
+  main{padding:12px}
+  .card{border-radius:16px}
+  .slot{grid-template-columns:52px 1fr auto}
+  .time{font-size:13px}
+  select{font-size:14px;padding:10px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<div id="banner" class="banner" role="status" aria-live="polite"></div>
+<header>
+  <div class="head">
+    <div class="brand">📅 Ivan · Wochenplan</div>
+    <div class="subtitle">Hochformat · automatisch passend für iPhone, iPad, Mac und Windows</div>
+    <div class="tabs">
+      <button class="tab active" type="button" data-view="today">Heute</button>
+      <button class="tab" type="button" data-view="week">Meine Woche</button>
+      <button class="tab" type="button" data-view="living">Wohnzimmer</button>
+      <button class="tab" type="button" data-view="templates">Vorlagen</button>
+      <button class="tab" type="button" data-view="setup">Wochen-Setup</button>
+      <button class="tab" type="button" data-view="data">Daten</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="today" class="view active">
+  <div class="card">
+    <div class="hero"><h2>Heute</h2><p id="todayDate"></p></div>
+    <div class="today-list" id="todayList"></div>
+  </div>
+</section>
+
+<section id="week" class="view">
+  <div class="card">
+    <div class="cardhead">
+      <div><div class="cardtitle">Meine Woche</div><div class="note">Privat · Haushalt · Bewerbungen · Termine · Erholung · DJ</div></div>
+      <div class="toolbar"><button class="btn" type="button" onclick="clearArea('week')">Leeren</button></div>
+    </div>
+    <div id="weekDays"></div>
+  </div>
+</section>
+
+<section id="living" class="view">
+  <div class="card">
+    <div class="cardhead">
+      <div><div class="cardtitle">Wohnzimmer</div><div class="note">Bar · Technik · Reinigung · Veranstaltungen · Daniel-Deadlines</div></div>
+      <div class="toolbar"><button class="btn" type="button" onclick="clearArea('living')">Leeren</button></div>
+    </div>
+    <div id="livingDays"></div>
+  </div>
+</section>
+
+<section id="templates" class="view">
+  <div class="card">
+    <div class="cardhead"><div><div class="cardtitle">Vorlagen</div><div class="note">Gleiche Kategorien wie in deiner bisherigen Datei.</div></div></div>
+    <div class="templategrid" id="templateGrid"></div>
+  </div>
+</section>
+
+<section id="setup" class="view">
+  <div class="card">
+    <div class="cardhead"><div><div class="cardtitle">Wochen-Setup</div><div class="note">Nur die wichtigsten Punkte für diese Woche.</div></div></div>
+    <div class="setupgrid">
+      <input id="weekLabel" placeholder="Woche ab …">
+      <input id="prio1" placeholder="Top-Priorität 1">
+      <input id="prio2" placeholder="Top-Priorität 2">
+      <input id="prio3" placeholder="Top-Priorität 3">
+      <input id="deadline" placeholder="Fixtermin / Deadline">
+      <input id="event" placeholder="DJ / Veranstaltung">
+      <textarea id="note" rows="4" placeholder="Notiz für diese Woche"></textarea>
+      <button class="btn primary" type="button" onclick="saveSetup()">Setup speichern</button>
+    </div>
+  </div>
+</section>
+
+<section id="data" class="view">
+  <div class="card">
+    <div class="cardhead">
+      <div><div class="cardtitle">Sicherung</div><div class="note">Alle Daten als Datei speichern oder wiederherstellen.</div></div>
+    </div>
+    <div class="datagrid">
+      <div class="toolbar">
+        <button class="btn primary" type="button" onclick="exportBackup()">⬇️ Backup exportieren (JSON)</button>
+        <button class="btn" type="button" id="importBtn">⬆️ Backup importieren</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      </div>
+      <div class="filehint">Export lädt eine JSON-Datei herunter. Import ersetzt die aktuellen Daten nach Bestätigung.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <div><div class="cardtitle">Wartung</div><div class="note">Bei Problemen: prüfen, reparieren oder komplett neu starten.</div></div>
+    </div>
+    <div class="datagrid">
+      <div id="dataStats"></div>
+      <div class="toolbar">
+        <button class="btn" type="button" onclick="repairData()">🛠️ Daten prüfen &amp; reparieren</button>
+        <button class="btn danger" type="button" onclick="resetAll()">⚠️ Alles zurücksetzen</button>
+      </div>
+      <div class="filehint" id="storageWarning"></div>
+    </div>
+  </div>
+</section>
+</main>
+</div>
+
+<script>
+// ================= Konstanten =================
+const TEMPLATES = [
+  {"cat":"Erholung","name":"Freier Tag / Relaxen","icon":"🌿","area":"Privat"},
+  {"cat":"Planung","name":"Wochenplanung / Kaffee","icon":"☕","area":"Privat"},
+  {"cat":"Haushalt","name":"Aufräumen","icon":"🧹","area":"Privat"},
+  {"cat":"Haushalt","name":"Küche","icon":"🍳","area":"Privat"},
+  {"cat":"Haushalt","name":"Bad / WC","icon":"🛁","area":"Privat"},
+  {"cat":"Haushalt","name":"Wäsche","icon":"🧺","area":"Privat"},
+  {"cat":"Haushalt","name":"Einkaufen","icon":"🛒","area":"Privat"},
+  {"cat":"Haushalt","name":"Carmen vorbereiten","icon":"✨","area":"Privat"},
+  {"cat":"Beruf","name":"Bewerbungen schreiben","icon":"💼","area":"Privat"},
+  {"cat":"Gesundheit","name":"Arzt / Abklärung","icon":"🩺","area":"Privat"},
+  {"cat":"Organisation","name":"Behörden / Administration","icon":"📄","area":"Privat"},
+  {"cat":"Pause","name":"Mittagessen","icon":"🍽️","area":"Privat"},
+  {"cat":"Pause","name":"Pause / Erholung","icon":"☕","area":"Privat"},
+  {"cat":"Planung","name":"ChatGPT / Entwicklung","icon":"💻","area":"Privat"},
+  {"cat":"DJ","name":"DJ / Musik vorbereiten","icon":"🎧","area":"Privat"},
+  {"cat":"DJ","name":"Veranstaltung / Auflegen","icon":"🎛️","area":"Privat"},
+  {"cat":"Wohnzimmer","name":"Bar vorbereiten","icon":"🍸","area":"Wohnzimmer"},
+  {"cat":"Wohnzimmer","name":"Bar fertigstellen","icon":"🍹","area":"Wohnzimmer"},
+  {"cat":"Wohnzimmer","name":"Einkauf Bar","icon":"🛒","area":"Wohnzimmer"},
+  {"cat":"Wohnzimmer","name":"Technik / Licht / Sound","icon":"🔊","area":"Wohnzimmer"},
+  {"cat":"Wohnzimmer","name":"DJ-Setup Wohnzimmer","icon":"🎧","area":"Wohnzimmer"},
+  {"cat":"Wohnzimmer","name":"Reinigung Wohnzimmer","icon":"🧽","area":"Wohnzimmer"},
+  {"cat":"Wohnzimmer","name":"Aufbau Veranstaltung","icon":"🛠️","area":"Wohnzimmer"},
+  {"cat":"Wohnzimmer","name":"Abbau Veranstaltung","icon":"📦","area":"Wohnzimmer"},
+  {"cat":"Wohnzimmer","name":"Deadline Daniel","icon":"⏰","area":"Wohnzimmer"},
+  {"cat":"Frei","name":"Eigene Aufgabe","icon":"✏️","area":"Beide"}
+];
+const DAYS = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
+const TIMES = Array.from({length:17},(_,i)=>String(i+7).padStart(2,'0')+':00');
+const KEY = 'ivan_week_dashboard_v1';
+const SETUP_FIELDS = ['weekLabel','prio1','prio2','prio3','deadline','event','note'];
+const DAY_BY_JS_INDEX = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+
+// ================= Hilfsfunktionen =================
+function currentDayName(){
+  return DAY_BY_JS_INDEX[new Date().getDay()];
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function isPlainObj(v){
+  return v!==null && typeof v==='object' && !Array.isArray(v);
+}
+function isValidSlotKey(k){
+  if(typeof k!=='string') return false;
+  const idx=k.indexOf('|');
+  if(idx<0) return false;
+  const day=k.slice(0,idx), time=k.slice(idx+1);
+  return DAYS.indexOf(day)>=0 && TIMES.indexOf(time)>=0;
+}
+
+// ================= Zustand & Speicher =================
+function defaultState(){
+  return {
+    version:1,
+    week:{},
+    living:{},
+    done:{},
+    setup:{weekLabel:'',prio1:'',prio2:'',prio3:'',deadline:'',event:'',note:''}
+  };
+}
+
+function storageAvailable(){
+  try{
+    const t='__probe__';
+    localStorage.setItem(t,'1');
+    localStorage.removeItem(t);
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+const STORAGE_OK = storageAvailable();
+
+// Prüft und bereinigt beliebige Eingabedaten zu einem garantiert gültigen Zustand.
+// "changed" wird nur bei echten Struktur-/Typproblemen gesetzt (nicht bei normalem
+// Aufräumen wie leeren Werten), damit die Meldung "Daten repariert" nicht bei jedem
+// Start unnötig erscheint.
+function sanitizeState(input){
+  const out = defaultState();
+  let changed = false;
+
+  if(!isPlainObj(input)){
+    return {state:out, changed: input!==undefined && input!==null};
+  }
+
+  ['week','living'].forEach(function(area){
+    const src = input[area];
+    if(isPlainObj(src)){
+      Object.keys(src).forEach(function(k){
+        const v = src[k];
+        const isEmpty = typeof v==='string' && v.trim()==='';
+        if(isValidSlotKey(k) && typeof v==='string' && !isEmpty){
+          out[area][k]=v;
+        } else if(!isEmpty){
+          changed = true;
+        }
+      });
+    } else if(src!==undefined){
+      changed = true;
+    }
+  });
+
+  if(isPlainObj(input.done)){
+    Object.keys(input.done).forEach(function(k){
+      const idx=k.indexOf('|');
+      if(idx<0){
+        if(input.done[k]!==undefined) changed=true;
+        return;
+      }
+      const area=k.slice(0,idx), slot=k.slice(idx+1);
+      const formatOk = (area==='week'||area==='living') && isValidSlotKey(slot);
+      if(!formatOk){
+        if(input.done[k]!==undefined) changed=true;
+        return;
+      }
+      if(input.done[k]===true && out[area][slot]){
+        out.done[k]=true;
+      }
+    });
+  } else if(input.done!==undefined){
+    changed = true;
+  }
+
+  if(isPlainObj(input.setup)){
+    SETUP_FIELDS.forEach(function(f){
+      const v = input.setup[f];
+      if(typeof v==='string'){
+        out.setup[f]=v;
+      } else if(v!==undefined){
+        changed = true;
+      }
+    });
+  } else if(input.setup!==undefined){
+    changed = true;
+  }
+
+  return {state:out, changed};
+}
+
+function loadState(){
+  if(!STORAGE_OK){
+    return {state:defaultState(), repaired:false};
+  }
+  let raw=null;
+  try{ raw=localStorage.getItem(KEY); }catch(e){ raw=null; }
+  if(!raw){
+    return {state:defaultState(), repaired:false};
+  }
+  let parsed;
+  try{
+    parsed = JSON.parse(raw);
+  }catch(e){
+    try{ localStorage.setItem(KEY+'_broken_'+Date.now(), raw); }catch(e2){ /* bestmöglich sichern, sonst ignorieren */ }
+    return {state:defaultState(), repaired:true};
+  }
+  const res = sanitizeState(parsed);
+  return {state:res.state, repaired:res.changed};
+}
+
+let S = defaultState();
+
+function persist(){
+  if(!STORAGE_OK) return false;
+  try{
+    localStorage.setItem(KEY, JSON.stringify(S));
+    return true;
+  }catch(e){
+    showBanner('Speichern fehlgeschlagen (Speicher voll oder blockiert). Bitte Backup exportieren.', 'error');
+    return false;
+  }
+}
+
+function save(){
+  persist();
+  renderToday();
+  renderDataStats();
+}
+
+// ================= Rendering =================
+function choices(area){
+  return TEMPLATES.filter(function(t){
+    return area==='week' ? (t.area==='Privat'||t.area==='Beide') : (t.area==='Wohnzimmer'||t.area==='Beide');
+  });
+}
+
+function optionHtml(area, selected){
+  selected = selected || '';
+  const opts = ['<option value="">— auswählen —</option>'];
+  choices(area).forEach(function(t){
+    const v = t.icon+' '+t.name;
+    opts.push('<option '+(v===selected?'selected':'')+'>'+v+'</option>');
+  });
+  return opts.join('');
+}
+
+function renderArea(area, targetId){
+  const host = document.getElementById(targetId);
+  host.innerHTML = '';
+  const today = currentDayName();
+  DAYS.forEach(function(day){
+    const wrap = document.createElement('div');
+    wrap.className = 'day' + (day===today ? ' today' : '');
+    wrap.innerHTML = '<div class="dayname"><span>'+day+'</span>'+(day===today ? '<span class="todaypill">Heute</span>' : '')+'</div>';
+    TIMES.forEach(function(time){
+      const id = day+'|'+time;
+      const doneKey = area+'|'+id;
+      const val = S[area][id] || '';
+      const done = !!S.done[doneKey];
+      const row = document.createElement('div');
+      row.className = 'slot';
+      row.innerHTML =
+        '<div class="time">'+time+'</div>'+
+        '<select aria-label="'+day+' '+time+'">'+optionHtml(area,val)+'</select>'+
+        '<button type="button" class="done '+(done?'on':'')+'" '+(val?'':'disabled')+' aria-pressed="'+done+'" aria-label="Erledigt">'+(done?'✓':'○')+'</button>';
+
+      const selectEl = row.querySelector('select');
+      const doneBtn = row.querySelector('.done');
+
+      selectEl.addEventListener('change', function(e){
+        const v = e.target.value;
+        const prev = S[area][id] || '';
+        if(v !== prev){
+          // Aufgabe wurde geändert oder geleert -> Erledigt-Status ist nicht mehr gültig
+          delete S.done[doneKey];
+          doneBtn.classList.remove('on');
+          doneBtn.textContent = '○';
+          doneBtn.setAttribute('aria-pressed','false');
+        }
+        if(v){
+          S[area][id] = v;
+          doneBtn.disabled = false;
+        } else {
+          delete S[area][id];
+          doneBtn.disabled = true;
+        }
+        save();
+      });
+
+      doneBtn.addEventListener('click', function(){
+        if(!S[area][id]) return;
+        if(S.done[doneKey]){
+          delete S.done[doneKey];
+        } else {
+          S.done[doneKey] = true;
+        }
+        const nowOn = !!S.done[doneKey];
+        doneBtn.classList.toggle('on', nowOn);
+        doneBtn.textContent = nowOn ? '✓' : '○';
+        doneBtn.setAttribute('aria-pressed', String(nowOn));
+        save();
+      });
+
+      wrap.appendChild(row);
+    });
+    host.appendChild(wrap);
+  });
+}
+
+function renderTemplates(){
+  const g = document.getElementById('templateGrid');
+  g.innerHTML = '';
+  TEMPLATES.forEach(function(t){
+    const d = document.createElement('div');
+    d.className = 'template';
+    d.innerHTML = '<strong>'+t.icon+' '+t.name+'</strong><small>'+t.cat+' · '+t.area+'</small>';
+    g.appendChild(d);
+  });
+}
+
+function renderToday(){
+  const host = document.getElementById('todayList');
+  const d = new Date();
+  document.getElementById('todayDate').textContent = d.toLocaleDateString('de-CH',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const day = currentDayName();
+  const entries = [];
+  ['week','living'].forEach(function(area){
+    Object.keys(S[area]).forEach(function(id){
+      const val = S[area][id];
+      const sep = id.indexOf('|');
+      const dy = id.slice(0,sep), time = id.slice(sep+1);
+      if(dy===day && val){
+        entries.push({area:area, id:id, time:time, val:val, done: !!S.done[area+'|'+id]});
+      }
+    });
+  });
+  entries.sort(function(a,b){ return a.time.localeCompare(b.time); });
+  host.innerHTML = '';
+  if(!entries.length){
+    host.innerHTML = '<div class="empty">Für heute ist noch nichts eingetragen.</div>';
+    return;
+  }
+  entries.forEach(function(x){
+    const r = document.createElement('div');
+    r.className = 'today-item';
+    r.innerHTML =
+      '<div class="time">'+x.time+'</div>'+
+      '<div><strong>'+escapeHtml(x.val)+'</strong><div class="note">'+(x.area==='week'?'Meine Woche':'Wohnzimmer')+'</div></div>'+
+      '<button type="button" class="done '+(x.done?'on':'')+'" aria-pressed="'+x.done+'" aria-label="Erledigt">'+(x.done?'✓':'○')+'</button>';
+    r.querySelector('.done').addEventListener('click', function(){
+      const doneKey = x.area+'|'+x.id;
+      if(S.done[doneKey]){ delete S.done[doneKey]; } else { S.done[doneKey] = true; }
+      save();
+      renderToday();
+    });
+    host.appendChild(r);
+  });
+}
+
+function renderDataStats(){
+  const el = document.getElementById('dataStats');
+  if(!el) return;
+  const weekCount = Object.keys(S.week).length;
+  const livingCount = Object.keys(S.living).length;
+  const doneCount = Object.keys(S.done).filter(function(k){ return S.done[k]; }).length;
+  el.innerHTML =
+    '<div class="stat-row"><span>Einträge · Meine Woche</span><strong>'+weekCount+'</strong></div>'+
+    '<div class="stat-row"><span>Einträge · Wohnzimmer</span><strong>'+livingCount+'</strong></div>'+
+    '<div class="stat-row"><span>Als erledigt markiert</span><strong>'+doneCount+'</strong></div>';
+}
+
+function renderAll(){
+  renderArea('week','weekDays');
+  renderArea('living','livingDays');
+  renderTemplates();
+  renderToday();
+  loadSetup();
+  renderDataStats();
+  const w = document.getElementById('storageWarning');
+  if(w){
+    w.textContent = STORAGE_OK ? '' : 'Hinweis: Lokale Speicherung ist in diesem Browser nicht verfügbar. Änderungen bleiben nur bis zum Schliessen der Seite erhalten — bitte regelmässig „Backup exportieren" nutzen.';
+  }
+}
+
+// ================= Aktionen =================
+function clearArea(area){
+  const label = area==='week' ? 'Meine Woche' : 'Wohnzimmer';
+  if(!confirm('„'+label+'" wirklich vollständig leeren?')) return;
+  S[area] = {};
+  Object.keys(S.done).forEach(function(k){ if(k.indexOf(area+'|')===0) delete S.done[k]; });
+  save();
+  renderArea(area, area==='week' ? 'weekDays' : 'livingDays');
+  showBanner(label+' wurde geleert.', 'success');
+}
+
+function saveSetup(){
+  SETUP_FIELDS.forEach(function(id){ S.setup[id] = document.getElementById(id).value; });
+  save();
+  showBanner('Wochen-Setup gespeichert.', 'success');
+}
+
+function loadSetup(){
+  SETUP_FIELDS.forEach(function(id){
+    const el = document.getElementById(id);
+    if(el) el.value = S.setup[id] || '';
+  });
+}
+
+function exportBackup(){
+  const payload = {
+    app: 'ivan-wochenplan-dashboard',
+    exportedAt: new Date().toISOString(),
+    version: S.version || 1,
+    data: S
+  };
+  let blob;
+  try{
+    blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  }catch(e){
+    showBanner('Export fehlgeschlagen.', 'error');
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = 'ivan-wochenplan-backup-'+stamp+'.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  showBanner('Backup wurde heruntergeladen.', 'success');
+}
+
+function importBackupFile(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    let parsed;
+    try{
+      parsed = JSON.parse(e.target.result);
+    }catch(err){
+      showBanner('Import fehlgeschlagen: Die Datei ist kein gültiges JSON.', 'error');
+      return;
+    }
+    const raw = (isPlainObj(parsed) && isPlainObj(parsed.data)) ? parsed.data : parsed;
+    const res = sanitizeState(raw);
+    const fixed = res.state, changed = res.changed;
+    const totalEntries = Object.keys(fixed.week).length + Object.keys(fixed.living).length;
+    const hasSetup = SETUP_FIELDS.some(function(f){ return fixed.setup[f]; });
+    if(totalEntries===0 && !hasSetup){
+      showBanner('Import fehlgeschlagen: Die Datei enthält keine erkennbaren Wochenplan-Daten.', 'error');
+      return;
+    }
+    if(!confirm('Aktuelle Daten werden durch die importierte Sicherung ersetzt. Fortfahren?')) return;
+    S = fixed;
+    save();
+    renderAll();
+    showBanner(changed ? 'Import abgeschlossen. Einige Einträge waren ungültig und wurden bereinigt.' : 'Import erfolgreich.', 'success');
+  };
+  reader.onerror = function(){ showBanner('Import fehlgeschlagen: Datei konnte nicht gelesen werden.', 'error'); };
+  reader.readAsText(file);
+}
+
+function repairData(){
+  const res = sanitizeState(S);
+  S = res.state;
+  save();
+  renderAll();
+  showBanner(res.changed ? 'Reparatur abgeschlossen: ungültige Einträge wurden bereinigt.' : 'Keine Probleme gefunden — alles in Ordnung.', res.changed ? 'success' : 'info');
+}
+
+function resetAll(){
+  if(!confirm('Wirklich ALLE Daten löschen? Wochenplan, Wohnzimmer-Plan, Erledigt-Status und Wochen-Setup werden vollständig zurückgesetzt. Das kann nicht rückgängig gemacht werden.')) return;
+  S = defaultState();
+  save();
+  renderAll();
+  showBanner('Zurückgesetzt. Alle Daten wurden gelöscht.', 'success');
+}
+
+// ================= Banner =================
+let bannerTimer = null;
+function showBanner(msg, kind){
+  const el = document.getElementById('banner');
+  if(!el) return;
+  el.textContent = msg;
+  el.className = 'banner show ' + (kind || 'info');
+  if(bannerTimer) clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(function(){ el.classList.remove('show'); }, 5000);
+}
+
+// ================= Event-Verkabelung =================
+document.querySelectorAll('.tab').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+    document.querySelectorAll('.view').forEach(function(x){ x.classList.remove('active'); });
+    b.classList.add('active');
+    document.getElementById(b.dataset.view).classList.add('active');
+  });
+});
+document.getElementById('banner').addEventListener('click', function(){
+  document.getElementById('banner').classList.remove('show');
+});
+document.getElementById('importBtn').addEventListener('click', function(){
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', function(e){
+  const file = e.target.files && e.target.files[0];
+  if(file) importBackupFile(file);
+  e.target.value = '';
+});
+
+// ================= Start =================
+(function init(){
+  const loaded = loadState();
+  S = loaded.state;
+  renderAll();
+  if(loaded.repaired){
+    persist(); // bereinigten Stand sofort sichern, damit der Hinweis nicht bei jedem Start erneut erscheint
+    showBanner('Einige gespeicherte Daten waren beschädigt und wurden automatisch bereinigt.', 'info');
+  }
+})();
+
+// ================= Web App / Offline =================
+// Registrierung schlägt bewusst geräuschlos fehl (z.B. beim lokalen Öffnen per Datei
+// ohne echtes Hosting) – die App funktioniert in dem Fall weiterhin normal, nur ohne
+// Offline-Cache und ohne "Zum Home-Bildschirm hinzufügen".
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){ /* kein Offline-Modus verfügbar, kein Problem */ });
+  });
+}
+</script>
+</body>
+</html>
