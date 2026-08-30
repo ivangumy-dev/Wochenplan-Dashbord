@@ -88,7 +88,7 @@ button:focus-visible,.tab:focus-visible,select:focus-visible,input:focus-visible
 .lock-icon{font-size:36px;margin-bottom:8px}
 .lock-card h2{margin:0 0 6px;font-size:20px}
 .lock-card .note{margin:0 0 20px}
-.lock-input{text-align:center;font-size:24px;letter-spacing:.3em;padding:14px 12px}
+.lock-input{text-align:center;font-size:24px;letter-spacing:.3em;padding:14px 12px;-webkit-text-security:disc;text-security:disc}
 .lock-error{color:var(--danger);font-size:13px;min-height:1.2em;margin:8px 0}
 .lock-submit{width:100%;margin-top:6px}
 .lock-forgot{border:0;background:none;color:var(--muted);font-size:13px;margin-top:14px;text-decoration:underline;font-family:inherit;padding:4px}
@@ -115,7 +115,7 @@ button:focus-visible,.tab:focus-visible,select:focus-visible,input:focus-visible
     <div class="lock-icon">🔒</div>
     <h2 id="lockTitle">Code eingeben</h2>
     <p class="note" id="lockSubtitle">Gib deinen Code ein, um fortzufahren.</p>
-    <input id="lockInput" class="lock-input" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="8" placeholder="••••">
+    <input id="lockInput" class="lock-input" type="tel" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="off" maxlength="8" placeholder="••••">
     <div class="lock-error" id="lockError"></div>
     <button type="button" class="btn primary lock-submit" id="lockSubmit">Entsperren</button>
     <button type="button" class="lock-forgot" id="lockForgot" hidden>Code vergessen?</button>
@@ -780,7 +780,10 @@ function changePinFlow(){
 
 lockEl('lockSubmit').addEventListener('click', handleLockSubmit);
 lockEl('lockInput').addEventListener('keydown', function(e){ if(e.key === 'Enter') handleLockSubmit(); });
-lockEl('lockInput').addEventListener('input', function(e){ e.target.value = e.target.value.replace(/[^0-9]/g,''); });
+lockEl('lockInput').addEventListener('input', function(e){
+  const cleaned = e.target.value.replace(/[^0-9]/g,'');
+  if(cleaned !== e.target.value){ e.target.value = cleaned; }
+});
 lockEl('lockForgot').addEventListener('click', function(){
   if(confirm('Code zurücksetzen? Deine gespeicherten Aufgaben bleiben erhalten, nur die Sperre wird entfernt. Danach kannst du einen neuen Code festlegen.')){
     removePinHash();
