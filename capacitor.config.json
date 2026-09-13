@@ -1,0 +1,9 @@
+{
+  "appId": "ch.ivangumy.wochenplan",
+  "appName": "Wochenplan",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "ios": { "contentInset": "always", "backgroundColor": "#F5F6F8" },
+  "android": { "backgroundColor": "#F5F6F8" },
+  "plugins": { "SplashScreen": { "launchShowDuration": 700, "backgroundColor": "#0E7C86" } }
+}
